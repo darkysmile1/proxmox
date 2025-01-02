@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2021-2025 community-scripts ORG
-# Author: Dominik Siebel (dsiebel)
-# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
-# Source: https://github.com/toniebox-reverse-engineering/teddycloud
-
 # App default values
 APP="TeddyCloud"
 var_tags="media"
@@ -16,19 +11,30 @@ var_version="12"
 CONTAINER_NAME="teddycloud"
 HOST_IP="192.168.178.190"
 
-# App Output & Base Settings
-header_info "${APP}"
-base_settings
+# Farben für Ausgaben
+GREEN="\033[0;32m"
+YELLOW="\033[1;33m"
+RED="\033[0;31m"
+NC="\033[0m" # Reset
 
-# Core
-variables
-color
-catch_errors
+# Funktionen für Ausgabe
+function msg_info() {
+    echo -e "${YELLOW}[INFO]${NC} $1"
+}
 
+function msg_ok() {
+    echo -e "${GREEN}[OK]${NC} $1"
+}
+
+function msg_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Container erstellen und starten
 function build_teddycloud_container() {
     msg_info "Creating LXC container for ${APP} with IP ${HOST_IP}"
     
-    # Container erstellen und die Container-ID auslesen
+    # Container erstellen
     pct create ${CONTAINER_ID} /var/lib/vz/template/cache/${var_os}-${var_version}-standard_amd64.tar.gz \
         -hostname ${CONTAINER_NAME} \
         -rootfs ${var_disk} \
@@ -66,13 +72,13 @@ function build_teddycloud_container() {
     msg_ok "LXC container created and started successfully"
 }
 
+# Update-Skript für die Anwendung
 function update_script() {
-    header_info
-    check_container_storage
-    check_container_resources
-    if [[ ! -d /opt/teddycloud ]]; then msg_error "No ${APP} Installation Found!"; exit; fi
+    msg_info "Checking for updates"
     RELEASE="$(curl -s https://api.github.com/repos/toniebox-reverse-engineering/teddycloud/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3) }')"
     VERSION="${RELEASE#tc_v}"
+    msg_info "Latest version is v${VERSION}"
+
     if [[ ! -f "/opt/${APP}_version.txt" || "${VERSION}" != "$(cat /opt/${APP}_version.txt)" ]]; then
         msg_info "Stopping ${APP}"
         systemctl stop teddycloud
@@ -103,11 +109,8 @@ function update_script() {
     exit
 }
 
-start
+# Starten der Erstellung und Aktualisierung
+msg_info "Starting the process"
 build_teddycloud_container
-description
-
-msg_ok "Completed Successfully!\n"
-echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
-echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${HOST_IP}${CL}"
+msg_ok "TeddyCloud setup has been successfully initialized!"
+msg_info "Access it using the following URL: http://${HOST_IP}"
