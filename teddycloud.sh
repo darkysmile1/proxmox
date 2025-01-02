@@ -2,13 +2,13 @@
 
 # App default values
 APP="TeddyCloud"
+CONTAINER_NAME="teddycloud"
 var_tags="media"
 var_cpu="2"
 var_disk="8"
 var_ram="1024"
 var_os="debian"
 var_version="12"
-CONTAINER_NAME="teddycloud"
 HOST_IP="192.168.178.190"
 
 # Farben für Ausgaben
@@ -33,6 +33,12 @@ function msg_error() {
 # Container erstellen und starten
 function build_teddycloud_container() {
     msg_info "Creating LXC container for ${APP} with IP ${HOST_IP}"
+
+    # Prüfe, ob das Debian-Template existiert
+    if [[ ! -f /var/lib/vz/template/cache/${var_os}-${var_version}-standard_amd64.tar.gz ]]; then
+        msg_error "Debian template ${var_os}-${var_version} not found!"
+        exit 1
+    fi
 
     # Container erstellen
     pct create ${CONTAINER_ID} /var/lib/vz/template/cache/${var_os}-${var_version}-standard_amd64.tar.gz \
