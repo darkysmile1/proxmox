@@ -33,7 +33,7 @@ function msg_error() {
 # Container erstellen und starten
 function build_teddycloud_container() {
     msg_info "Creating LXC container for ${APP} with IP ${HOST_IP}"
-    
+
     # Container erstellen
     pct create ${CONTAINER_ID} /var/lib/vz/template/cache/${var_os}-${var_version}-standard_amd64.tar.gz \
         -hostname ${CONTAINER_NAME} \
@@ -111,6 +111,8 @@ function update_script() {
 
 # Starten der Erstellung und Aktualisierung
 msg_info "Starting the process"
+# Container erstellen und starten
 build_teddycloud_container
+
 msg_ok "TeddyCloud setup has been successfully initialized!"
 msg_info "Access it using the following URL: http://${HOST_IP}"
