@@ -34,14 +34,24 @@ function msg_error() {
 function build_teddycloud_container() {
     msg_info "Creating LXC container for ${APP} with IP ${HOST_IP}"
 
-    # Prüfe, ob das Debian-Template existiert
-    if [[ ! -f /var/lib/vz/template/cache/${var_os}-${var_version}-standard_amd64.tar.gz ]]; then
-        msg_error "Debian template ${var_os}-${var_version} not found!"
-        exit 1
+    # Prüfen, ob das Debian-Template vorhanden ist, wenn nicht, herunterladen
+    TEMPLATE_PATH="/var/lib/vz/template/cache/${var_os}-${var_version}-standard_amd64.tar.gz"
+    if [[ ! -f ${TEMPLATE_PATH} ]]; then
+        msg_info "Debian template ${var_os}-${var_version} not found. Downloading..."
+        # Debian-Template herunterladen
+        wget -q "http://download.proxmox.com/debian/dists/pve-enterprise/main/binary-amd64/${var_os}-${var_version}-standard_amd64.tar.gz" -O ${TEMPLATE_PATH}
+        
+        if [[ $? -ne 0 ]]; then
+            msg_error "Failed to download the Debian template!"
+            exit 1
+        fi
+        msg_ok "Debian template downloaded successfully"
+    else
+        msg_ok "Debian template already exists"
     fi
 
     # Container erstellen
-    pct create ${CONTAINER_ID} /var/lib/vz/template/cache/${var_os}-${var_version}-standard_amd64.tar.gz \
+    pct create ${CONTAINER_ID} ${TEMPLATE_PATH} \
         -hostname ${CONTAINER_NAME} \
         -rootfs ${var_disk} \
         -memory ${var_ram} \
