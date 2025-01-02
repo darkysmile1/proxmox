@@ -8,7 +8,8 @@ HOST_IP="192.168.178.190"
 DISK_SIZE="8G"
 RAM="1024"
 CPU_CORES="2"
-OS_TEMPLATE="debian-12-standard"
+OS_TEMPLATE="debian-12-standard_12.0-1_amd64.tar.zst"
+TEMPLATE_STORAGE="local:vztmpl"
 
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"
@@ -35,10 +36,27 @@ function check_requirements() {
     fi
 }
 
+# Vorlage überprüfen und herunterladen
+function check_template() {
+    msg_info "Checking if LXC template ${OS_TEMPLATE} exists"
+    if ! pveam list | grep -q "${OS_TEMPLATE}"; then
+        msg_info "Template not found, downloading ${OS_TEMPLATE}"
+        pveam update
+        pveam download local ${OS_TEMPLATE}
+        if [[ $? -ne 0 ]]; then
+            msg_error "Failed to download template ${OS_TEMPLATE}"
+            exit 1
+        fi
+        msg_ok "Template ${OS_TEMPLATE} downloaded"
+    else
+        msg_ok "Template ${OS_TEMPLATE} is available"
+    fi
+}
+
 # LXC-Container erstellen
 function create_container() {
     msg_info "Creating LXC container for ${APP} with IP ${HOST_IP}"
-    pct create ${CONTAINER_ID} local:vztmpl/${OS_TEMPLATE} \
+    pct create ${CONTAINER_ID} ${TEMPLATE_STORAGE}/${OS_TEMPLATE} \
         --hostname ${CONTAINER_NAME} \
         --storage local-lvm \
         --rootfs ${DISK_SIZE} \
@@ -112,6 +130,7 @@ EOF
 # Hauptskript
 function main() {
     check_requirements
+    check_template
     create_container
     setup_docker
     setup_teddycloud
