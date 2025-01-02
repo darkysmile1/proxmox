@@ -44,8 +44,19 @@ function build_teddycloud_container() {
         exit 1
     fi
 
-    msg_ok "LXC container created successfully"
+    msg_info "Starting LXC container for ${APP}"
+    pct start ${CONTAINER_ID}
+    if [[ $? -ne 0 ]]; then
+        msg_error "Failed to start LXC container"
+        exit 1
+    fi
+
+    # Warte, bis der Container betriebsbereit ist
+    sleep 5
+
+    msg_ok "LXC container created and started successfully"
 }
+
 
 function setup_teddycloud() {
     msg_info "Installing Docker and setting up TeddyCloud"
